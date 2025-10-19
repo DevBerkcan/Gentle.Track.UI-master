@@ -1,0 +1,128 @@
+/* src/components/common/ResponsiveTable.css */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 20px;
+}
+
+.responsive-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 100%;
+}
+
+.responsive-table thead {
+  background: #f8fafc;
+}
+
+.responsive-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.responsive-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.responsive-table tr:hover {
+  background: #f8fafc;
+}
+
+/* Mobile: Stack table vertically */
+@media screen and (max-width: 767px) {
+  .responsive-table-container {
+    border: none;
+    overflow-x: visible;
+  }
+
+  .responsive-table {
+    display: block;
+    width: 100%;
+  }
+
+  /* CRITICAL: Hide the table header on mobile */
+  .responsive-table thead {
+    display: none !important;
+  }
+
+  .responsive-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    background: white;
+  }
+
+  .responsive-table tr:hover {
+    background: #f8fafc;
+  }
+
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border: none;
+    text-align: right;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #475569;
+    text-align: left;
+    flex: 0 0 40%;
+    padding-right: 10px;
+  }
+
+  .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Special handling for badges */
+  .responsive-table td .badge {
+    margin-left: auto;
+  }
+
+  /* Special handling for progress bars */
+  .responsive-table td .progress-bar {
+    max-width: 150px;
+    margin-left: auto;
+  }
+
+  /* Action buttons in mobile */
+  .responsive-table .action-buttons {
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .responsive-table .action-buttons .btn {
+    width: auto;
+    flex: 1;
+    min-width: auto;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  /* Ensure proper alignment for complex content */
+  .responsive-table td > div,
+  .responsive-table td > span {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+}

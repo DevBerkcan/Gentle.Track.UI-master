@@ -1,0 +1,216 @@
+/* src/components/common/SearchableDropdown.css */
+
+.searchable-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+/* Trigger */
+.searchable-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  gap: 10px;
+}
+
+.searchable-dropdown-trigger.open {
+  border-color: #11998e;
+  box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+}
+
+.searchable-dropdown-trigger:hover {
+  border-color: #cbd5e1;
+}
+
+/* Selected display */
+.searchable-dropdown-selected {
+  flex: 1;
+  cursor: pointer;
+}
+
+.selected-label {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.selected-sublabel {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+/* Input */
+.searchable-dropdown-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #1e293b;
+  background: transparent;
+  padding: 0;
+  cursor: text;
+  width: 100%;
+}
+
+.searchable-dropdown-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Arrow */
+.searchable-dropdown-arrow {
+  font-size: 10px;
+  color: #64748b;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.searchable-dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.searchable-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dropdown Option */
+.searchable-dropdown-option {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  background: white;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.searchable-dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.searchable-dropdown-option:hover {
+  background: #f8fafc;
+}
+
+.searchable-dropdown-option.selected {
+  background: #f0f9ff;
+}
+
+.searchable-dropdown-option.selected:hover {
+  background: #e0f2fe;
+}
+
+.option-label {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.option-sublabel {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+/* No results */
+.searchable-dropdown-no-results {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Scrollbar styling */
+.searchable-dropdown-menu {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.searchable-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.searchable-dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.searchable-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.searchable-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Force pointer cursor everywhere in options */
+.searchable-dropdown-option,
+.searchable-dropdown-option * {
+  cursor: pointer !important;
+}
+
+/* Mobile optimizations */
+@media screen and (max-width: 767px) {
+  .searchable-dropdown-trigger {
+    min-height: 48px;
+    padding: 12px 15px;
+  }
+
+  .searchable-dropdown-input,
+  .selected-label,
+  .option-label {
+    font-size: 16px;
+  }
+
+  .selected-sublabel,
+  .option-sublabel {
+    font-size: 13px;
+  }
+
+  .searchable-dropdown-menu {
+    max-height: 250px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .searchable-dropdown-option:active {
+    background: #f1f5f9;
+  }
+}
