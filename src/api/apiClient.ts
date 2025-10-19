@@ -1,63 +1,48 @@
 // src/api/apiClient.ts
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = 'http://94.16.104.230/api'; // https://localhost:7047/api
+// ❌ NICHT mehr hart codieren:
+// const API_BASE_URL = 'http://94.16.104.230/api';
+
+// ✅ über ENV (Vercel: VITE_API_BASE_URL=/api, sonst Fallback '/api')
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, 
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // wichtig wegen refreshToken-Cookie
 });
 
 let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
+let failedQueue: Array<{ resolve: (v?: unknown)=>void; reject: (r?: unknown)=>void; }> = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-
+  failedQueue.forEach(p => error ? p.reject(error) : p.resolve(token));
   failedQueue = [];
 };
 
-// Request interceptor - Add JWT token to all requests
+// Token an alle Requests anhängen
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - Handle token refresh on 401 errors
+// 401 → Refresh-Flow
 apiClient.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    const currentPath = window.location.pathname;
+    const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean });
+    const path = typeof window !== 'undefined' ? window.location.pathname : '';
 
-    // Don't handle 401 on login page or customer view
-    if (currentPath.includes('/login') || currentPath.includes('/kundenansicht')) {
+    if (path.includes('/login') || path.includes('/kundenansicht')) {
       return Promise.reject(error);
     }
 
-    // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Avoid refresh token endpoint from triggering refresh
       if (originalRequest.url?.includes('/admins/refresh')) {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
@@ -66,75 +51,47 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      originalRequest._retry = true;
+
       if (isRefreshing) {
-        // If refresh is already in progress, queue this request
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
+        return new Promise((resolve, reject) => failedQueue.push({ resolve, reject }))
+          .then((newToken) => {
+            if (originalRequest.headers && typeof newToken === 'string') {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
             }
             return apiClient(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
           });
       }
 
-      originalRequest._retry = true;
       isRefreshing = true;
-
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        // No refresh token, redirect to login
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('admin');
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
       try {
-        // Attempt to refresh the token
-        const response = await axios.post(
-          `${API_BASE_URL}/admins/refresh`,
-          { refreshToken },
-          { withCredentials: true }
-        );
+        const refreshToken = localStorage.getItem('refreshToken'); // optional; Cookie reicht i.d.R.
+        const resp = await apiClient.post('/admins/refresh', { refreshToken }); // <-- baseURL wird genutzt
+        const { token: newToken, refreshToken: newRt, admin } = resp.data;
 
-        const { token: newToken, refreshToken: newRefreshToken, admin } = response.data;
+        if (newToken) localStorage.setItem('token', newToken);
+        if (newRt)    localStorage.setItem('refreshToken', newRt);
+        if (admin)    localStorage.setItem('admin', JSON.stringify(admin));
 
-        // Update stored tokens
-        localStorage.setItem('token', newToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-        localStorage.setItem('admin', JSON.stringify(admin));
-
-        // Update the authorization header
-        if (originalRequest.headers) {
+        if (originalRequest.headers && newToken) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
 
-        // Process queued requests
-        processQueue(null, newToken);
-
-        // Retry the original request
+        processQueue(null, newToken ?? null);
         return apiClient(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, clear storage and redirect to login
-        processQueue(refreshError as Error, null);
+      } catch (e) {
+        processQueue(e as Error, null);
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('admin');
         window.location.href = '/login';
-        return Promise.reject(refreshError);
+        throw e;
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(error);
+    throw error;
   }
 );
 
